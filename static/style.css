@@ -1,0 +1,17 @@
+body {
+  background-color: #f0f0f0;
+}
+
+.container {
+  margin-top: 50px;
+}
+
+.result-container {
+  border: 2px solid #007bff;
+  background-color: #f8f9fa;
+  color: #007bff;
+  font-size: 20px;
+  font-weight: bold;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
