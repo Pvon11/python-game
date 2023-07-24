@@ -9,25 +9,155 @@
 
 <body>
     <div class="container mt-5">
-        <h1 class="text-center">Rock Paper Scissors</h1>
+        <h1 class="text-center">Rock Paper Scissors Game</h1>
         <div class="row justify-content-center mt-3">
             <div class="col-sm-6">
-                <form method="post" class="text-center">
+                <button id="playGameBtn" class="btn btn-primary">Play Game</button>
+            </div>
+        </div>
+        <div id="gameFormDiv" class="row justify-content-center mt-3" style="display: none;">
+            <div class="col-sm-6">
+                <form id="gameForm" class="text-center">
                     <div class="form-group">
                         <label for="player_choice">Enter your choice (rock, paper, scissors):</label>
                         <input type="text" class="form-control" id="player_choice" name="player_choice" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="opponentSelect">Select your opponent:</label>
+                        <select class="form-control" id="opponentSelect" name="opponent" required>
+                            <!-- Opponent options will be added dynamically using JavaScript -->
+                        </select>
                     </div>
                     <button type="submit" class="btn btn-primary">Play</button>
                 </form>
             </div>
         </div>
-        <div class="row justify-content-center mt-5">
+        <div id="gameResultsDiv" class="row justify-content-center mt-5" style="display: none;">
             <div class="col-sm-6">
-
+                <div id="gameResults" class="card text-center">
+                    <div class="card-header">
+                        <h3>Results</h3>
+                    </div>
+                    <div class="card-body">
+                        <img id="opponentImage" src="" alt="Opponent">
+                        <p class="card-text">Player chose: <span id="playerChoiceResult"></span></p>
+                        <p class="card-text">Computer chose: <span id="computerChoiceResult"></span></p>
+                        <p class="card-text" id="roundResult"></p>
+                        <a id="playAgainBtn" class="btn btn-primary">Play Again</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    </div>
+
+    <script>
+        let computer_opponents = []; // Initialize an empty array to store computer opponents
+
+        // Fetch computer opponents data from the server when the page loads
+        fetch('/get_opponents')
+            .then(response => response.json())
+            .then(data => {
+                computer_opponents = data; // Store the received data in the variable
+
+                // Populate the opponent selection dropdown with options
+                const opponentSelect = document.getElementById("opponentSelect");
+                computer_opponents.forEach((opponent, index) => {
+                    const option = document.createElement("option");
+                    option.value = index;
+                    option.text = opponent.name;
+                    opponentSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching computer opponents:', error);
+            });
+
+        const playGameBtn = document.getElementById("playGameBtn");
+        const gameFormDiv = document.getElementById("gameFormDiv");
+        const gameForm = document.getElementById("gameForm");
+        const gameResultsDiv = document.getElementById("gameResultsDiv");
+        const opponentImage = document.getElementById("opponentImage");
+        const playerChoiceResult = document.getElementById("playerChoiceResult");
+        const computerChoiceResult = document.getElementById("computerChoiceResult");
+        const roundResult = document.getElementById("roundResult");
+        const playAgainBtn = document.getElementById("playAgainBtn");
+
+        playGameBtn.addEventListener("click", function () {
+            playGameBtn.style.display = "none";
+            gameFormDiv.style.display = "block";
+            gameForm.style.display = "block";
+            gameResultsDiv.style.display = "none";
+            opponentImage.src = "";
+            playerChoiceResult.textContent = "";
+            computerChoiceResult.textContent = "";
+            roundResult.textContent = "";
+
+            // Disable the form input and play button until the user submits the choice
+            document.getElementById("player_choice").disabled = false;
+            document.getElementById("opponentSelect").disabled = false;
+            document.querySelector("#gameForm button[type='submit']").disabled = false;
+        });
+
+        gameForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+            const playerChoice = document.getElementById("player_choice").value.trim().toLowerCase();
+
+            // Get opponent index from the user's selection
+            const opponentIndex = document.getElementById("opponentSelect").value;
+            const selected_opponent = computer_opponents[opponentIndex];
+
+            // Perform the round logic and update the results
+            fetch("/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    player_choice: playerChoice,
+                    opponent: opponentIndex,
+                }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const { computer_choice, result } = data;
+                    // Update the displayed opponent image and round results
+                    opponentImage.src = "/static/" + selected_opponent["image"];
+                    playerChoiceResult.textContent = `Player chose: ${playerChoice}`;
+                    computerChoiceResult.textContent = `Computer chose: ${computer_choice}`;
+                    roundResult.textContent = result;
+
+                    // Enable the playGameBtn and disable the gameForm after each round
+                    playGameBtn.style.display = "block";
+                    gameFormDiv.style.display = "block";
+                    gameForm.style.display = "none";
+                    gameResultsDiv.style.display = "block";
+                    document.getElementById("player_choice").disabled = true;
+                    document.getElementById("opponentSelect").disabled = true;
+                    document.querySelector("#gameForm button[type='submit']").disabled = true;
+                })
+                .catch(error => {
+                    console.error('Error playing round:', error);
+                });
+        });
+
+        playAgainBtn.addEventListener("click", function () {
+            // Reset the game state and start a new campaign round
+            // Display the form to start a new round
+            playGameBtn.style.display = "none";
+            gameFormDiv.style.display = "block";
+            gameForm.style.display = "block";
+            gameResultsDiv.style.display = "none";
+            opponentImage.src = "";
+            playerChoiceResult.textContent = "";
+            computerChoiceResult.textContent = "";
+            roundResult.textContent = "";
+
+            // Enable the form input and play button
+            document.getElementById("player_choice").disabled = false;
+            document.getElementById("opponentSelect").disabled = false;
+            document.querySelector("#gameForm button[type='submit']").disabled = false;
+        });
+    </script>
 </body>
 
 </html>
