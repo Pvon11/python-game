@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, jsonify
 import random
-import os
 
 app = Flask(__name__)
 
@@ -24,27 +23,16 @@ def determine_winner(player_choice, computer_choice):
     else:
         return "Invalid choice. Please choose 'rock', 'paper', or 'scissors'."
 
-def initialize_campaign():
-    return {"round": 1, "user_wins": 0, "computer_wins": 0, "selected_opponent": None}
-
-def play_round(player_choice, selected_opponent):
-    options = ["rock", "paper", "scissors"]
-    computer_choice = random.choice(options)
-    result = determine_winner(player_choice, computer_choice)
-
-    if result == "Player wins!":
-        selected_opponent["user_wins"] += 1
-    elif result == "Computer wins!":
-        selected_opponent["computer_wins"] += 1
-
-    return computer_choice, result
+def play_round(player_choice, opponent):
+    result = determine_winner(player_choice, opponent)
+    return opponent, result
 
 @app.route("/", methods=["GET", "POST"])
 def play_game():
     if request.method == "POST":
         data = request.get_json()
         player_choice = data["player_choice"].lower().strip()
-        opponent_index = int(data["opponent"])
+        opponent_index = int(data["opponent_index"])  # Convert opponent_index to an integer
         selected_opponent = computer_opponents[opponent_index]
 
         computer_choice, result = play_round(player_choice, selected_opponent)
@@ -59,7 +47,7 @@ def play_game():
             "opponent_image": selected_opponent["image"]
         })
 
-    return render_template("index.html", opponents=computer_opponents)
+    return render_template("index.html", computer_opponents=computer_opponents)
 
 @app.route("/get_opponents", methods=["GET"])
 def get_opponents():
@@ -67,5 +55,3 @@ def get_opponents():
 
 if __name__ == "__main__":
     app.run()
-
-
