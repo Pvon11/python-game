@@ -62,57 +62,50 @@ function startRound() {
 
 function playRound(event) {
   event.preventDefault();
-  const playerChoice = document
-    .getElementById("player_choice")
-    .value.trim()
-    .toLowerCase();
+  const playerChoice = document.getElementById("player_choice").value.trim().toLowerCase();
 
-  // Generate computer's choice (rock, paper, or scissors)
-  const computerChoices = ["rock", "paper", "scissors"];
-  const computerChoice =
-    computerChoices[Math.floor(Math.random() * computerChoices.length)];
+  fetch("/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      player_choice: playerChoice,
+      opponent_index: opponentIndex,
+    }),
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      // Display the player's choice and computer's choice
+      playerChoiceResult.textContent = `Player chose: ${playerChoice}`;
+      computerChoiceResult.textContent = `Computer chose: ${data.computer_choice}`;
 
-  // Display the player's choice and computer's choice
-  playerChoiceResult.textContent = `Player chose: ${playerChoice}`;
-  computerChoiceResult.textContent = `Computer chose: ${computerChoice}`;
+      // Display the result of the round
+      roundResult.textContent = data.result;
 
-  // Perform game logic and display the result
-  const result = determineWinner(playerChoice, computerChoice);
-  roundResult.textContent = result;
-  opponentImage.style.display = "block"; // Show the opponent's image after both choices are made
+      // Update game state based on the result
+      if (data.result === "Player wins!") {
+        playerWins++;
+      } else if (data.result === "Computer wins!") {
+        computerWins++;
+      }
 
-  // Update game state based on the result
-  if (result === "Player wins!") {
-    playerWins++;
-  } else if (result === "Computer wins!") {
-    computerWins++;
-  }
+      // Check if we have a winner or need to move to the next round
+      if (playerWins >= totalRounds || computerWins >= totalRounds) {
+        showGameResults();
+      } else {
+        currentRound++;
+        opponentIndex = (opponentIndex + 1) % computerOpponents.length; // Move to the next opponent
+        startRound();
+      }
 
-  // Check if we have a winner or need to move to the next round
-  if (playerWins >= totalRounds || computerWins >= totalRounds) {
-    showGameResults();
-  } else {
-    currentRound++;
-    startRound();
-  }
-
-  // Disable the form input and play button until the user clicks "Play Again"
-  document.getElementById("player_choice").disabled = true;
-  document.querySelector("#gameForm button[type='submit']").disabled = true;
-}
-
-function determineWinner(playerChoice, computerChoice) {
-  if (playerChoice === computerChoice) {
-    return "It's a tie!";
-  } else if (playerChoice === "rock") {
-    return computerChoice === "scissors" ? "Player wins!" : "Computer wins!";
-  } else if (playerChoice === "paper") {
-    return computerChoice === "rock" ? "Player wins!" : "Computer wins!";
-  } else if (playerChoice === "scissors") {
-    return computerChoice === "paper" ? "Player wins!" : "Computer wins!";
-  } else {
-    return "Invalid choice. Please choose 'rock', 'paper', or 'scissors'.";
-  }
+      // Disable the form input and play button until the user clicks "Play Again"
+      document.getElementById("player_choice").disabled = true;
+      document.querySelector("#gameForm button[type='submit']").disabled = true;
+    })
+    .catch((error) => {
+      console.error("Error playing round:", error);
+    });
 }
 
 function showGameResults() {
@@ -120,8 +113,7 @@ function showGameResults() {
   if (playerWins > computerWins) {
     resultMessage.textContent = "Congratulations! You won the game!";
   } else if (computerWins > playerWins) {
-    resultMessage.textContent =
-      "Oops! You lost the game. Better luck next time!";
+    resultMessage.textContent = "Oops! You lost the game. Better luck next time!";
   } else {
     resultMessage.textContent = "It's a tie! Try again!";
   }

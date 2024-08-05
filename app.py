@@ -23,9 +23,10 @@ def determine_winner(player_choice, computer_choice):
     else:
         return "Invalid choice. Please choose 'rock', 'paper', or 'scissors'."
 
-def play_round(player_choice, opponent):
-    result = determine_winner(player_choice, opponent)
-    return opponent, result
+def play_round(player_choice):
+    computer_choice = random.choice(["rock", "paper", "scissors"])
+    result = determine_winner(player_choice, computer_choice)
+    return computer_choice, result
 
 @app.route("/", methods=["GET", "POST"])
 def play_game():
@@ -35,7 +36,7 @@ def play_game():
         opponent_index = int(data["opponent_index"])  # Convert opponent_index to an integer
         selected_opponent = computer_opponents[opponent_index]
 
-        computer_choice, result = play_round(player_choice, selected_opponent)
+        computer_choice, result = play_round(player_choice)
 
         return jsonify({
             "computer_choice": computer_choice,
@@ -54,4 +55,4 @@ def get_opponents():
     return jsonify(computer_opponents)
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
